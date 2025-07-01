@@ -66,4 +66,4 @@ else:
     if st.button("🔁 Replay"):
         st.session_state.step = 0
         st.session_state.points = 0
-        st.experimental_rerun()
+        #st.experimental_rerun()
