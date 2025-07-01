@@ -28,31 +28,30 @@ options = [
 if "step" not in st.session_state:
     st.session_state.step = 0
     st.session_state.points = 0
-    st.session_state.selected = None
-    st.session_state.show_feedback = False
+    st.session_state.feedback_shown = False
 
 # Title
 st.markdown("## ☕ MISSION LIETUVA: COFFEE SHOP QUEST 🧩")
 
-# Game in progress
+# Game flow
 if st.session_state.step < len(dialogue_steps):
     phrase, question, correct_answer = dialogue_steps[st.session_state.step]
 
     st.markdown(f"### 🗨️ {phrase}")
     st.markdown(f"**{question}**")
 
-    st.session_state.selected = st.radio("Choose your answer:", options[st.session_state.step], key=f"radio_{st.session_state.step}")
+    selected = st.radio("Choose your answer:", options[st.session_state.step], key=f"choice_{st.session_state.step}")
 
     if st.button("Submit Answer"):
-        if st.session_state.selected == correct_answer:
+        if selected == correct_answer:
             st.success("✅ Correct! Well done!")
             st.session_state.points += 10
         else:
             st.error(f"❌ Incorrect. The correct answer was: **{correct_answer}**")
         st.session_state.step += 1
-        st.experimental_rerun()
+        st.session_state.feedback_shown = True
 
-else:
+elif st.session_state.step >= len(dialogue_steps):
     st.markdown(f"## 🎉 Coffee Shop Mission Complete!")
     st.markdown(f"**Final Score: {st.session_state.points} points**")
 
@@ -66,4 +65,4 @@ else:
     if st.button("🔁 Replay"):
         st.session_state.step = 0
         st.session_state.points = 0
-        #st.experimental_rerun()
+        st.session_state.feedback_shown = False
