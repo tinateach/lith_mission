@@ -1,0 +1,103 @@
+
+import time
+import random
+
+# Define points
+points = 0
+
+def print_title():
+    print("🕵️‍♀️ MISSION LIETUVA – A LANGUAGE ADVENTURE 🧩")
+    print("Your mission: Complete 4 challenges using Lithuanian!")
+    print("---------------------------------------------------")
+
+def vocabulary_challenge():
+    global points
+    print("\n🧠 Task 1: Vocabulary Challenge – Match the word with the image (text-based)\n")
+    options = {
+        "obuolys": "🍎",
+        "mokykla": "🏫",
+        "sultys": "🧃"
+    }
+    for word, emoji in options.items():
+        answer = input(f"What is the Lithuanian word for {emoji}? ").strip().lower()
+        if answer == word:
+            print("✅ Correct!")
+            points += 5
+        else:
+            print(f"❌ Incorrect. The answer was: {word}")
+    print(f"🎯 You now have {points} points.")
+
+def listening_clue():
+    global points
+    print("\n🎧 Task 2: Listening Clue – Kur yra stotis?")
+    print("Audio plays: 'Kur yra stotis?' (Where is the station?)")
+    print("What does 'stotis' mean?")
+    answer = input("Type the answer in English: ").strip().lower()
+    if answer in ["station", "bus station", "train station"]:
+        print("✅ Correct!")
+        points += 10
+    else:
+        print("❌ Incorrect. 'Stotis' means 'station'.")
+    print(f"🎯 You now have {points} points.")
+
+def speaking_task():
+    global points
+    print("\n🗣️ Task 3: Speaking Task – Kiek kainuoja sultys?")
+    print("You walk to the shopkeeper (👩‍🏫 = teacher).")
+    print("Say this sentence: 'Kiek kainuoja sultys?' (How much is the juice?)")
+    input("Press Enter after saying it aloud... ")
+    print("🧃 Shopkeeper replies: 'Sultys kainuoja dvi eurus.'")
+    print("You got your clue!")
+    points += 10
+    print(f"🎯 You now have {points} points.")
+
+def grammar_lock():
+    global points
+    print("\n🔐 Task 4: Grammar Lock – Present Tense Verb Puzzle")
+    print("Complete the Lithuanian verb: 'aš ___ (dirbti)'")
+    answer = input("Your answer: ").strip().lower()
+    if answer == "dirbu":
+        print("✅ Correct!")
+        points += 10
+    else:
+        print("❌ Incorrect. The correct form is 'dirbu'")
+    print(f"🎯 You now have {points} points.")
+
+def bonus_round():
+    global points
+    print("\n✨ Bonus Round: Translate the secret sentence!")
+    print("Translate this into English: 'Aš geriu sultis.'")
+    answer = input("Your answer: ").strip().lower()
+    if "i drink juice" in answer or answer == "i am drinking juice":
+        print("✅ Correct!")
+        points += 5
+    else:
+        print("❌ Incorrect. It means 'I drink juice.'")
+    print(f"🎯 You now have {points} points.")
+
+def final_result():
+    print("\n🎉 Mission Complete!")
+    print(f"Your final score: {points} points")
+    if points >= 35:
+        print("🏆 Excellent Agent! Mission Lietuva accomplished with honors!")
+    elif points >= 25:
+        print("👍 Good job, Agent! You're learning fast!")
+    else:
+        print("🕵️‍♂️ Keep training, Agent. Lithuania needs you!")
+
+def start_game():
+    print_title()
+    vocabulary_challenge()
+    time.sleep(1)
+    listening_clue()
+    time.sleep(1)
+    speaking_task()
+    time.sleep(1)
+    grammar_lock()
+    time.sleep(1)
+    bonus_round()
+    time.sleep(1)
+    final_result()
+
+# Run the game
+start_game()
