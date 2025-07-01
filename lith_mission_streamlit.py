@@ -31,7 +31,7 @@ if "step" not in st.session_state:
     st.session_state.feedback_shown = False
 
 # Title
-st.markdown("## ☕ MISSION LIETUVA: COFFEE SHOP QUEST 🧩")
+st.markdown("## ☕ MISSION LIETUVA: COFFEE SHOP QUEST ")
 
 # Game flow
 if st.session_state.step < len(dialogue_steps):
