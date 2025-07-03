@@ -9,6 +9,7 @@ def initialize_game():
     st.session_state.finished = False
     st.session_state.validated = False
     st.session_state.feedback = ""
+    st.session_state.confirmed_answer = None  # answer locked in on validation
 
     st.session_state.dialogue_steps = [
         ("Kur yra kavinė?", "What does 'Kur yra kavinė?' mean?", "Where is the coffee shop?"),
@@ -32,8 +33,7 @@ def initialize_game():
         random.shuffle(all_options)
         st.session_state.choices.append(all_options)
 
-    # Reset answer selection
-    st.session_state.selected_answer = None
+    st.session_state.pending_answer = None  # currently selected but NOT confirmed
 
 if "step" not in st.session_state:
     initialize_game()
@@ -47,13 +47,16 @@ if not st.session_state.finished:
     st.markdown(f"### 🗨️ {phrase}")
     st.markdown(f"**{question}**")
 
-    # Initialize selection if not set
-    if "selected_answer" not in st.session_state or st.session_state.selected_answer not in options:
-        st.session_state.selected_answer = options[0]
+    # Initialize pending_answer if not set or invalid
+    if "pending_answer" not in st.session_state or st.session_state.pending_answer not in options:
+        st.session_state.pending_answer = options[0]
 
-    # Radio button for answers
-    user_choice = st.radio("Choose the correct answer:", options, index=options.index(st.session_state.selected_answer))
-    st.session_state.selected_answer = user_choice
+    # Only allow changing answer if not validated yet
+    if not st.session_state.validated:
+        st.session_state.pending_answer = st.radio("Choose the correct answer:", options, index=options.index(st.session_state.pending_answer))
+    else:
+        # After validation, show the confirmed answer as text, not radio
+        st.markdown(f"**Your answer:** {st.session_state.confirmed_answer}")
 
     col1, col2 = st.columns(2)
 
@@ -63,7 +66,8 @@ if not st.session_state.finished:
         next_clicked = st.button("Next", disabled=not st.session_state.validated)
 
     if validate_clicked:
-        if st.session_state.selected_answer == correct_answer:
+        st.session_state.confirmed_answer = st.session_state.pending_answer
+        if st.session_state.confirmed_answer == correct_answer:
             st.session_state.points += 10
             st.session_state.correct_count += 1
             st.session_state.feedback = "✅ Correct!"
@@ -76,12 +80,14 @@ if not st.session_state.finished:
         st.session_state.step += 1
         st.session_state.validated = False
         st.session_state.feedback = ""
-        # Reset selection for next question
+        st.session_state.confirmed_answer = None
+        # Reset pending answer for next question or finish game
         if st.session_state.step < len(st.session_state.dialogue_steps):
-            st.session_state.selected_answer = st.session_state.choices[st.session_state.step][0]
+            st.session_state.pending_answer = st.session_state.choices[st.session_state.step][0]
         else:
             st.session_state.finished = True
 
+    # Show feedback after validation
     if st.session_state.feedback:
         if "Correct" in st.session_state.feedback:
             st.success(st.session_state.feedback)
