@@ -3,15 +3,13 @@ import random
 
 st.set_page_config(page_title="Coffee Shop Game", layout="centered")
 
-# Initialize session state on first load
-if "step" not in st.session_state:
+def initialize_game():
     st.session_state.step = 0
     st.session_state.points = 0
     st.session_state.correct_count = 0
     st.session_state.wrong_count = 0
     st.session_state.finished = False
 
-    # Dialogue data
     st.session_state.dialogue_steps = [
         ("Kur yra kavinė?", "What does 'Kur yra kavinė?' mean?", "Where is the coffee shop?"),
         ("Kur galiu atsisėsti?", "What does 'Kur galiu atsisėsti?' mean?", "Where can I sit?"),
@@ -26,6 +24,7 @@ if "step" not in st.session_state:
     ]
 
     random.shuffle(st.session_state.dialogue_steps)
+
     correct_answers = [item[2] for item in st.session_state.dialogue_steps]
     st.session_state.choices = []
     for phrase, question, correct in st.session_state.dialogue_steps:
@@ -33,6 +32,10 @@ if "step" not in st.session_state:
         all_options = wrongs + [correct]
         random.shuffle(all_options)
         st.session_state.choices.append(all_options)
+
+# Initialize game if not already done
+if "step" not in st.session_state:
+    initialize_game()
 
 st.title("☕ MISSION LIETUVA: COFFEE SHOP QUEST ")
 
@@ -74,6 +77,5 @@ else:
         st.warning("🕵️ Keep learning! You're getting there!")
 
     if st.button("🔁 Play Again"):
-        for key in list(st.session_state.keys()):
-            del st.session_state[key]
+        initialize_game()
         st.experimental_rerun()
