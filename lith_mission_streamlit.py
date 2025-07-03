@@ -9,7 +9,9 @@ def initialize_game():
     st.session_state.finished = False
     st.session_state.validated = False
     st.session_state.feedback = ""
-    st.session_state.confirmed_answer = None  # answer locked in on validation
+    st.session_state.confirmed_answer = None
+    st.session_state.pending_answer = None
+    st.session_state.auto_next = False
 
     st.session_state.dialogue_steps = [
         ("Kur yra kavinė?", "What does 'Kur yra kavinė?' mean?", "Where is the coffee shop?"),
@@ -33,66 +35,61 @@ def initialize_game():
         random.shuffle(all_options)
         st.session_state.choices.append(all_options)
 
-    st.session_state.pending_answer = None  # currently selected but NOT confirmed
-
 if "step" not in st.session_state:
     initialize_game()
 
 st.title("☕ MISSION LIETUVA: COFFEE SHOP QUEST ")
 
 if not st.session_state.finished:
-    phrase, question, correct_answer = st.session_state.dialogue_steps[st.session_state.step]
-    options = st.session_state.choices[st.session_state.step]
 
-    st.markdown(f"### 🗨️ {phrase}")
-    st.markdown(f"**{question}**")
-
-    # Initialize pending_answer if not set or invalid
-    if "pending_answer" not in st.session_state or st.session_state.pending_answer not in options:
-        st.session_state.pending_answer = options[0]
-
-    # Only allow changing answer if not validated yet
-    if not st.session_state.validated:
-        st.session_state.pending_answer = st.radio("Choose the correct answer:", options, index=options.index(st.session_state.pending_answer))
-    else:
-        # After validation, show the confirmed answer as text, not radio
-        st.markdown(f"**Your answer:** {st.session_state.confirmed_answer}")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        validate_clicked = st.button("Validate", disabled=st.session_state.validated)
-    with col2:
-        next_clicked = st.button("Next", disabled=not st.session_state.validated)
-
-    if validate_clicked:
-        st.session_state.confirmed_answer = st.session_state.pending_answer
-        if st.session_state.confirmed_answer == correct_answer:
-            st.session_state.points += 10
-            st.session_state.correct_count += 1
-            st.session_state.feedback = "✅ Correct!"
-        else:
-            st.session_state.wrong_count += 1
-            st.session_state.feedback = f"❌ Incorrect. Correct answer: {correct_answer}"
-        st.session_state.validated = True
-
-    if next_clicked:
+    # If auto_next flag is set, advance question automatically and reset flags
+    if st.session_state.auto_next:
         st.session_state.step += 1
         st.session_state.validated = False
         st.session_state.feedback = ""
         st.session_state.confirmed_answer = None
-        # Reset pending answer for next question or finish game
-        if st.session_state.step < len(st.session_state.dialogue_steps):
-            st.session_state.pending_answer = st.session_state.choices[st.session_state.step][0]
-        else:
-            st.session_state.finished = True
+        st.session_state.pending_answer = None
+        st.session_state.auto_next = False
 
-    # Show feedback after validation
-    if st.session_state.feedback:
-        if "Correct" in st.session_state.feedback:
-            st.success(st.session_state.feedback)
+        if st.session_state.step >= len(st.session_state.dialogue_steps):
+            st.session_state.finished = True
         else:
-            st.error(st.session_state.feedback)
+            # Reset pending answer to first option of new question
+            st.session_state.pending_answer = st.session_state.choices[st.session_state.step][0]
+
+    if not st.session_state.finished:
+        phrase, question, correct_answer = st.session_state.dialogue_steps[st.session_state.step]
+        options = st.session_state.choices[st.session_state.step]
+
+        st.markdown(f"### 🗨️ {phrase}")
+        st.markdown(f"**{question}**")
+
+        if "pending_answer" not in st.session_state or st.session_state.pending_answer not in options:
+            st.session_state.pending_answer = options[0]
+
+        # Allow answer selection only if not validated yet
+        if not st.session_state.validated:
+            st.session_state.pending_answer = st.radio("Choose the correct answer:", options, index=options.index(st.session_state.pending_answer))
+        else:
+            st.markdown(f"**Your answer:** {st.session_state.confirmed_answer}")
+
+        if st.button("Validate", disabled=st.session_state.validated):
+            st.session_state.confirmed_answer = st.session_state.pending_answer
+            if st.session_state.confirmed_answer == correct_answer:
+                st.session_state.points += 10
+                st.session_state.correct_count += 1
+                st.session_state.feedback = "✅ Correct!"
+            else:
+                st.session_state.wrong_count += 1
+                st.session_state.feedback = f"❌ Incorrect. Correct answer: {correct_answer}"
+            st.session_state.validated = True
+            st.session_state.auto_next = True  # trigger auto move next on next rerun
+
+        if st.session_state.feedback:
+            if "Correct" in st.session_state.feedback:
+                st.success(st.session_state.feedback)
+            else:
+                st.error(st.session_state.feedback)
 
 else:
     st.markdown("## 🎉 Coffee Shop Mission Complete!")
