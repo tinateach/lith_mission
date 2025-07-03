@@ -3,7 +3,7 @@ import random
 
 st.set_page_config(page_title="☕ Lithuanian Coffee Shop Game", layout="centered")
 
-# --- Dialogue steps ---
+# Master data
 dialogue_steps_master = [
     ("Kur yra kavinė?", "What does 'Kur yra kavinė?' mean?", "Where is the coffee shop?"),
     ("Kur galiu atsisėsti?", "What does 'Kur galiu atsisėsti?' mean?", "Where can I sit?"),
@@ -19,7 +19,7 @@ dialogue_steps_master = [
 
 correct_answers_master = [item[2] for item in dialogue_steps_master]
 
-# --- Session State Initialization ---
+# --- Init session state ---
 if "game_started" not in st.session_state:
     st.session_state.game_started = False
     st.session_state.step = 0
@@ -28,55 +28,76 @@ if "game_started" not in st.session_state:
     st.session_state.wrong_count = 0
     st.session_state.dialogue = []
     st.session_state.options = []
+    st.session_state.show_feedback = False
+    st.session_state.feedback_text = ""
+    st.session_state.feedback_type = ""
+    st.session_state.selected = None
 
-# --- Game Reset ---
-def reset_game():
+# --- Start/Reset game ---
+def start_game():
     st.session_state.step = 0
     st.session_state.points = 0
     st.session_state.correct_count = 0
     st.session_state.wrong_count = 0
-    st.session_state.game_started = True
-
-    # Shuffle dialogue and prepare options
     st.session_state.dialogue = random.sample(dialogue_steps_master, len(dialogue_steps_master))
     st.session_state.options = []
     for phrase, question, correct in st.session_state.dialogue:
-        wrong_choices = random.sample([ans for ans in correct_answers_master if ans != correct], 2)
-        choices = wrong_choices + [correct]
-        random.shuffle(choices)
-        st.session_state.options.append(choices)
+        wrong_choices = random.sample([a for a in correct_answers_master if a != correct], 2)
+        all_choices = wrong_choices + [correct]
+        random.shuffle(all_choices)
+        st.session_state.options.append(all_choices)
+    st.session_state.game_started = True
+    st.session_state.show_feedback = False
+    st.session_state.feedback_text = ""
+    st.session_state.selected = None
 
-# --- Title Screen ---
-st.title("☕ MISSION LIETUVA: COFFEE SHOP QUEST 🧩")
+# --- Title screen ---
+st.title("☕ MISSION LIETUVA: COFFEE SHOP QUEST ")
 
 if not st.session_state.game_started:
-    st.markdown("Learn Lithuanian through real café conversations! 🇱🇹")
-    if st.button("🎮 Start Game"):
-        reset_game()
+    st.write("🎯 Learn Lithuanian through fun café interactions!")
+    if st.button("Start Game"):
+        start_game()
 
-# --- Game Play ---
+# --- Game in progress ---
 elif st.session_state.step < len(st.session_state.dialogue):
     phrase, question, correct_answer = st.session_state.dialogue[st.session_state.step]
     choices = st.session_state.options[st.session_state.step]
 
     st.markdown(f"### 🗨️ {phrase}")
-    st.markdown(f"**{question}**")
-    st.markdown(f"**Progress:** Question {st.session_state.step + 1} of {len(st.session_state.dialogue)}")
+    st.write(f"**{question}**")
+    st.write(f"**Progress:** {st.session_state.step + 1} / {len(st.session_state.dialogue)}")
 
-    selected = st.radio("Choose your answer:", choices, key=f"q_{st.session_state.step}")
+    st.session_state.selected = st.radio(
+        "Choose your answer:", choices, index=None, key=f"radio_{st.session_state.step}"
+    )
 
-    if st.button("Submit Answer"):
-        if selected == correct_answer:
-            st.success("✅ Correct!")
-            st.session_state.points += 10
-            st.session_state.correct_count += 1
+    if not st.session_state.show_feedback:
+        if st.button("Submit Answer"):
+            if st.session_state.selected == correct_answer:
+                st.session_state.feedback_text = "✅ Correct!"
+                st.session_state.feedback_type = "success"
+                st.session_state.points += 10
+                st.session_state.correct_count += 1
+            else:
+                st.session_state.feedback_text = f"❌ Incorrect. The correct answer was: **{correct_answer}**"
+                st.session_state.feedback_type = "error"
+                st.session_state.wrong_count += 1
+            st.session_state.show_feedback = True
+    else:
+        # Display feedback
+        if st.session_state.feedback_type == "success":
+            st.success(st.session_state.feedback_text)
         else:
-            st.error(f"❌ Incorrect. The correct answer was: **{correct_answer}**")
-            st.session_state.wrong_count += 1
-        st.session_state.step += 1
-        st.experimental_rerun()
+            st.error(st.session_state.feedback_text)
 
-# --- Results ---
+        if st.button("Next Question"):
+            st.session_state.step += 1
+            st.session_state.show_feedback = False
+            st.session_state.feedback_text = ""
+            st.session_state.selected = None
+
+# --- Game over screen ---
 else:
     st.header("🎉 Coffee Shop Mission Complete!")
     st.subheader(f"🎯 Score: {st.session_state.points} / 100")
@@ -91,5 +112,4 @@ else:
         st.warning("🕵️ Keep learning! You're getting there!")
 
     if st.button("🔁 Play Again"):
-        reset_game()
-        st.experimental_rerun()
+        start_game()
