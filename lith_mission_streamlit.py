@@ -11,8 +11,7 @@ def initialize_game():
     st.session_state.feedback = ""
     st.session_state.confirmed_answer = None
     st.session_state.pending_answer = None
-    st.session_state.auto_next = False
-    st.session_state.show_feedback = False  # New flag to show feedback before next question
+    st.session_state.show_feedback = False
 
     st.session_state.dialogue_steps = [
         ("Kur yra kavinė?", "What does 'Kur yra kavinė?' mean?", "Where is the coffee shop?"),
@@ -43,6 +42,11 @@ st.title("☕ MISSION LIETUVA: COFFEE SHOP QUEST ")
 
 if not st.session_state.finished:
 
+    total_questions = len(st.session_state.dialogue_steps)
+    current_question = st.session_state.step + 1
+
+    st.markdown(f"**Question {current_question} / {total_questions}**")
+
     phrase, question, correct_answer = st.session_state.dialogue_steps[st.session_state.step]
     options = st.session_state.choices[st.session_state.step]
 
@@ -53,7 +57,11 @@ if not st.session_state.finished:
         st.session_state.pending_answer = options[0]
 
     if not st.session_state.validated:
-        st.session_state.pending_answer = st.radio("Choose the correct answer:", options, index=options.index(st.session_state.pending_answer))
+        st.session_state.pending_answer = st.radio(
+            "Choose the correct answer:",
+            options,
+            index=options.index(st.session_state.pending_answer),
+        )
     else:
         st.markdown(f"**Your answer:** {st.session_state.confirmed_answer}")
 
@@ -68,16 +76,14 @@ if not st.session_state.finished:
                 st.session_state.wrong_count += 1
                 st.session_state.feedback = f"❌ Incorrect. Correct answer: {correct_answer}"
             st.session_state.validated = True
-            st.session_state.show_feedback = True  # Show feedback first
+            st.session_state.show_feedback = True
 
-    # Show feedback if validated
     if st.session_state.show_feedback:
         if "Correct" in st.session_state.feedback:
             st.success(st.session_state.feedback)
         else:
             st.error(st.session_state.feedback)
 
-        # Wait for user to click to continue
         if st.button("Next Question"):
             st.session_state.step += 1
             st.session_state.validated = False
@@ -90,7 +96,7 @@ if not st.session_state.finished:
                 st.session_state.finished = True
 
 else:
-    st.markdown("---")  # separator line for clarity
+    st.markdown("---")
 
     st.markdown("## 🎉 Coffee Shop Mission Complete!")
     st.markdown(f"**✅ Correct:** {st.session_state.correct_count}")
