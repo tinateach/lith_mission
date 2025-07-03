@@ -12,6 +12,7 @@ def initialize_game():
     st.session_state.confirmed_answer = None
     st.session_state.pending_answer = None
     st.session_state.auto_next = False
+    st.session_state.show_feedback = False  # New flag to show feedback before next question
 
     st.session_state.dialogue_steps = [
         ("Kur yra kavinė?", "What does 'Kur yra kavinė?' mean?", "Where is the coffee shop?"),
@@ -42,38 +43,22 @@ st.title("☕ MISSION LIETUVA: COFFEE SHOP QUEST ")
 
 if not st.session_state.finished:
 
-    # If auto_next flag is set, advance question automatically and reset flags
-    if st.session_state.auto_next:
-        st.session_state.step += 1
-        st.session_state.validated = False
-        st.session_state.feedback = ""
-        st.session_state.confirmed_answer = None
-        st.session_state.pending_answer = None
-        st.session_state.auto_next = False
+    phrase, question, correct_answer = st.session_state.dialogue_steps[st.session_state.step]
+    options = st.session_state.choices[st.session_state.step]
 
-        if st.session_state.step >= len(st.session_state.dialogue_steps):
-            st.session_state.finished = True
-        else:
-            # Reset pending answer to first option of new question
-            st.session_state.pending_answer = st.session_state.choices[st.session_state.step][0]
+    st.markdown(f"### 🗨️ {phrase}")
+    st.markdown(f"**{question}**")
 
-    if not st.session_state.finished:
-        phrase, question, correct_answer = st.session_state.dialogue_steps[st.session_state.step]
-        options = st.session_state.choices[st.session_state.step]
+    if "pending_answer" not in st.session_state or st.session_state.pending_answer not in options:
+        st.session_state.pending_answer = options[0]
 
-        st.markdown(f"### 🗨️ {phrase}")
-        st.markdown(f"**{question}**")
+    if not st.session_state.validated:
+        st.session_state.pending_answer = st.radio("Choose the correct answer:", options, index=options.index(st.session_state.pending_answer))
+    else:
+        st.markdown(f"**Your answer:** {st.session_state.confirmed_answer}")
 
-        if "pending_answer" not in st.session_state or st.session_state.pending_answer not in options:
-            st.session_state.pending_answer = options[0]
-
-        # Allow answer selection only if not validated yet
-        if not st.session_state.validated:
-            st.session_state.pending_answer = st.radio("Choose the correct answer:", options, index=options.index(st.session_state.pending_answer))
-        else:
-            st.markdown(f"**Your answer:** {st.session_state.confirmed_answer}")
-
-        if st.button("Validate", disabled=st.session_state.validated):
+    if not st.session_state.validated:
+        if st.button("Validate"):
             st.session_state.confirmed_answer = st.session_state.pending_answer
             if st.session_state.confirmed_answer == correct_answer:
                 st.session_state.points += 10
@@ -83,13 +68,26 @@ if not st.session_state.finished:
                 st.session_state.wrong_count += 1
                 st.session_state.feedback = f"❌ Incorrect. Correct answer: {correct_answer}"
             st.session_state.validated = True
-            st.session_state.auto_next = True  # trigger auto move next on next rerun
+            st.session_state.show_feedback = True  # Show feedback first
 
-        if st.session_state.feedback:
-            if "Correct" in st.session_state.feedback:
-                st.success(st.session_state.feedback)
-            else:
-                st.error(st.session_state.feedback)
+    # Show feedback if validated
+    if st.session_state.show_feedback:
+        if "Correct" in st.session_state.feedback:
+            st.success(st.session_state.feedback)
+        else:
+            st.error(st.session_state.feedback)
+
+        # Wait for user to click to continue
+        if st.button("Next Question"):
+            st.session_state.step += 1
+            st.session_state.validated = False
+            st.session_state.feedback = ""
+            st.session_state.confirmed_answer = None
+            st.session_state.pending_answer = None
+            st.session_state.show_feedback = False
+
+            if st.session_state.step >= len(st.session_state.dialogue_steps):
+                st.session_state.finished = True
 
 else:
     st.markdown("---")  # separator line for clarity
@@ -107,7 +105,6 @@ else:
         st.warning("🕵️ Keep learning! You're getting there!")
 
     if st.button("🔁 Play Again"):
-        # Clear all keys to fully reset game
         for key in list(st.session_state.keys()):
             del st.session_state[key]
         initialize_game()
