@@ -25,7 +25,6 @@ if "step" not in st.session_state:
         ("Ačiū, viskas gerai.", "What does 'Ačiū, viskas gerai.' mean?", "Thank you, everything is fine.")
     ]
 
-    # Shuffle questions and choices
     random.shuffle(st.session_state.dialogue_steps)
     correct_answers = [item[2] for item in st.session_state.dialogue_steps]
     st.session_state.choices = []
@@ -35,10 +34,8 @@ if "step" not in st.session_state:
         random.shuffle(all_options)
         st.session_state.choices.append(all_options)
 
-# Game title
 st.title("☕ MISSION LIETUVA: COFFEE SHOP QUEST ")
 
-# Show question or final result
 if not st.session_state.finished:
     phrase, question, correct_answer = st.session_state.dialogue_steps[st.session_state.step]
     options = st.session_state.choices[st.session_state.step]
@@ -46,21 +43,22 @@ if not st.session_state.finished:
     st.markdown(f"### 🗨️ {phrase}")
     st.markdown(f"**{question}**")
 
-    for option in options:
-        if st.button(option):
-            if option == correct_answer:
-                st.session_state.points += 10
-                st.session_state.correct_count += 1
-                st.success("✅ Correct!")
-            else:
-                st.session_state.wrong_count += 1
-                st.error(f"❌ Incorrect. Correct answer: {correct_answer}")
+    user_choice = st.radio("Choose the correct answer:", options)
 
-            st.session_state.step += 1
-            if st.session_state.step >= len(st.session_state.dialogue_steps):
-                st.session_state.finished = True
+    if st.button("Submit"):
+        if user_choice == correct_answer:
+            st.session_state.points += 10
+            st.session_state.correct_count += 1
+            st.success("✅ Correct!")
+        else:
+            st.session_state.wrong_count += 1
+            st.error(f"❌ Incorrect. Correct answer: {correct_answer}")
 
-            st.experimental_rerun()
+        st.session_state.step += 1
+        if st.session_state.step >= len(st.session_state.dialogue_steps):
+            st.session_state.finished = True
+
+        st.experimental_rerun()
 
 else:
     st.markdown("## 🎉 Coffee Shop Mission Complete!")
