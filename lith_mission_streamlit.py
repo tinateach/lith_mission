@@ -7,6 +7,8 @@ def initialize_game():
     st.session_state.correct_count = 0
     st.session_state.wrong_count = 0
     st.session_state.finished = False
+    st.session_state.validated = False  # track if current answer was validated
+    st.session_state.feedback = ""       # feedback message
 
     st.session_state.dialogue_steps = [
         ("Kur yra kavinė?", "What does 'Kur yra kavinė?' mean?", "Where is the coffee shop?"),
@@ -43,22 +45,50 @@ if not st.session_state.finished:
     st.markdown(f"### 🗨️ {phrase}")
     st.markdown(f"**{question}**")
 
-    with st.form(key="answer_form"):
-        user_choice = st.radio("Choose the correct answer:", options)
-        submitted = st.form_submit_button("Submit")
+    # Keep selected answer in session state to persist between reruns
+    if 'selected_answer' not in st.session_state:
+        st.session_state.selected_answer = options[0]
 
-    if submitted:
-        if user_choice == correct_answer:
-            st.session_state.points += 10
-            st.session_state.correct_count += 1
-            st.success("✅ Correct!")
+    user_choice = st.radio("Choose the correct answer:", options, index=options.index(st.session_state.selected_answer))
+    st.session_state.selected_answer = user_choice
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if st.button("Validate", key="validate_btn", disabled=st.session_state.validated):
+            # Validate answer only once per question
+            if st.session_state.validated:
+                st.warning("Already validated! Click Next to continue.")
+            else:
+                if user_choice == correct_answer:
+                    st.session_state.points += 10
+                    st.session_state.correct_count += 1
+                    st.session_state.feedback = "✅ Correct!"
+                else:
+                    st.session_state.wrong_count += 1
+                    st.session_state.feedback = f"❌ Incorrect. Correct answer: {correct_answer}"
+
+                st.session_state.validated = True
+
+    with col2:
+        # Next button enabled only after validation
+        if st.button("Next", key="next_btn", disabled=not st.session_state.validated):
+            st.session_state.step += 1
+            st.session_state.validated = False
+            st.session_state.feedback = ""
+            # Reset selected answer for new question if any
+            if st.session_state.step < len(st.session_state.dialogue_steps):
+                new_options = st.session_state.choices[st.session_state.step]
+                st.session_state.selected_answer = new_options[0]
+            else:
+                st.session_state.finished = True
+
+    # Show feedback after validation
+    if st.session_state.feedback:
+        if "Correct" in st.session_state.feedback:
+            st.success(st.session_state.feedback)
         else:
-            st.session_state.wrong_count += 1
-            st.error(f"❌ Incorrect. Correct answer: {correct_answer}")
-
-        st.session_state.step += 1
-        if st.session_state.step >= len(st.session_state.dialogue_steps):
-            st.session_state.finished = True
+            st.error(st.session_state.feedback)
 
 else:
     st.markdown("## 🎉 Coffee Shop Mission Complete!")
@@ -75,3 +105,7 @@ else:
 
     if st.button("🔁 Play Again"):
         initialize_game()
+        # Reset feedback & validation state for new game
+        st.session_state.validated = False
+        st.session_state.feedback = ""
+        st.session_state.selected_answer = None
