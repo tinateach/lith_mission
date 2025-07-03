@@ -1,15 +1,10 @@
-import tkinter as tk
-from tkinter import messagebox
+import streamlit as st
 import random
 
-# Game state
-points = 0
-step = 0
-correct_count = 0
-wrong_count = 0
+st.set_page_config(page_title="☕ Lithuanian Coffee Shop Game", layout="centered")
 
-# Lithuanian phrases, questions, correct answers
-dialogue_steps = [
+# --- Dialogue steps ---
+dialogue_steps_master = [
     ("Kur yra kavinė?", "What does 'Kur yra kavinė?' mean?", "Where is the coffee shop?"),
     ("Kur galiu atsisėsti?", "What does 'Kur galiu atsisėsti?' mean?", "Where can I sit?"),
     ("Ar vieta laisva?", "What does 'Ar vieta laisva?' mean?", "Is this seat free?"),
@@ -22,96 +17,79 @@ dialogue_steps = [
     ("Ačiū, viskas gerai.", "What does 'Ačiū, viskas gerai.' mean?", "Thank you, everything is fine.")
 ]
 
-# Extract correct answers for generating fake choices
-correct_answers = [item[2] for item in dialogue_steps]
+correct_answers_master = [item[2] for item in dialogue_steps_master]
 
-# Shuffle the questions
-random.shuffle(dialogue_steps)
+# --- Session State Initialization ---
+if "game_started" not in st.session_state:
+    st.session_state.game_started = False
+    st.session_state.step = 0
+    st.session_state.points = 0
+    st.session_state.correct_count = 0
+    st.session_state.wrong_count = 0
+    st.session_state.dialogue = []
+    st.session_state.options = []
 
-# Create shuffled options for each step
-shuffled_options = []
-for phrase, question, correct in dialogue_steps:
-    wrong_choices = random.sample([ans for ans in correct_answers if ans != correct], 2)
-    all_choices = wrong_choices + [correct]
-    random.shuffle(all_choices)
-    shuffled_options.append(all_choices)
+# --- Game Reset ---
+def reset_game():
+    st.session_state.step = 0
+    st.session_state.points = 0
+    st.session_state.correct_count = 0
+    st.session_state.wrong_count = 0
+    st.session_state.game_started = True
 
-# Setup UI window
-root = tk.Tk()
-root.title("☕ Lithuanian Coffee Shop Game")
-root.geometry("700x500")
+    # Shuffle dialogue and prepare options
+    st.session_state.dialogue = random.sample(dialogue_steps_master, len(dialogue_steps_master))
+    st.session_state.options = []
+    for phrase, question, correct in st.session_state.dialogue:
+        wrong_choices = random.sample([ans for ans in correct_answers_master if ans != correct], 2)
+        choices = wrong_choices + [correct]
+        random.shuffle(choices)
+        st.session_state.options.append(choices)
 
-phrase_label = tk.Label(root, text="", font=("Arial", 22), wraplength=650, justify="center")
-question_label = tk.Label(root, text="", font=("Arial", 20), wraplength=650, justify="center")
-buttons = []
+# --- Title Screen ---
+st.title("☕ MISSION LIETUVA: COFFEE SHOP QUEST 🧩")
 
-def start_game():
-    start_button.pack_forget()
-    title_label.pack_forget()
-    show_step()
+if not st.session_state.game_started:
+    st.markdown("Learn Lithuanian through real café conversations! 🇱🇹")
+    if st.button("🎮 Start Game"):
+        reset_game()
 
-def show_step():
-    if step >= len(dialogue_steps):
-        show_result()
-        return
+# --- Game Play ---
+elif st.session_state.step < len(st.session_state.dialogue):
+    phrase, question, correct_answer = st.session_state.dialogue[st.session_state.step]
+    choices = st.session_state.options[st.session_state.step]
 
-    phrase, question, _ = dialogue_steps[step]
-    phrase_label.config(text=f"🗨️ {phrase}")
-    question_label.config(text=question)
+    st.markdown(f"### 🗨️ {phrase}")
+    st.markdown(f"**{question}**")
+    st.markdown(f"**Progress:** Question {st.session_state.step + 1} of {len(st.session_state.dialogue)}")
 
-    for i in range(3):
-        buttons[i].config(text=shuffled_options[step][i])
+    selected = st.radio("Choose your answer:", choices, key=f"q_{st.session_state.step}")
 
-    phrase_label.pack(pady=20)
-    question_label.pack(pady=10)
-    for btn in buttons:
-        btn.pack(pady=5)
+    if st.button("Submit Answer"):
+        if selected == correct_answer:
+            st.success("✅ Correct!")
+            st.session_state.points += 10
+            st.session_state.correct_count += 1
+        else:
+            st.error(f"❌ Incorrect. The correct answer was: **{correct_answer}**")
+            st.session_state.wrong_count += 1
+        st.session_state.step += 1
+        st.experimental_rerun()
 
-def check_answer(selected_text):
-    global step, points, correct_count, wrong_count
-    correct = dialogue_steps[step][2]
+# --- Results ---
+else:
+    st.header("🎉 Coffee Shop Mission Complete!")
+    st.subheader(f"🎯 Score: {st.session_state.points} / 100")
+    st.write(f"✅ Correct answers: {st.session_state.correct_count}")
+    st.write(f"❌ Incorrect answers: {st.session_state.wrong_count}")
 
-    if selected_text == correct:
-        points += 10
-        correct_count += 1
-        messagebox.showinfo("✅ Correct!", "Well done!")
+    if st.session_state.points == 100:
+        st.success("🏆 Perfect! You're a café pro!")
+    elif st.session_state.points >= 60:
+        st.info("👍 Good job! Keep practicing!")
     else:
-        wrong_count += 1
-        messagebox.showerror("❌ Incorrect", f"The correct answer was: {correct}")
-    
-    step += 1
-    show_step()
+        st.warning("🕵️ Keep learning! You're getting there!")
 
-def show_result():
-    for btn in buttons:
-        btn.pack_forget()
-        
-    question_label.pack_forget()
-    phrase_label.config(text="🎉 Coffee Shop Mission Complete!")
-
-    summary = f"✅ Correct: {correct_count}\n❌ Incorrect: {wrong_count}\n🎯 Score: {points}/100"
-    
-    if points == 100:
-        result = "🏆 Perfect! You're a café pro!"
-    elif points >= 60:
-        result = "👍 Good job! Keep practicing!"
-    else:
-        result = "🕵️ Keep learning! You're getting there!"
-
-    messagebox.showinfo("Mission Result", f"{result}\n\n{summary}")
-
-# Create answer buttons
-for i in range(3):
-    btn = tk.Button(root, text="", width=50, font=("Arial", 20),
-                    command=lambda idx=i: check_answer(buttons[idx].cget("text")))
-    buttons.append(btn)
-
-# Title and start button
-title_label = tk.Label(root, text="☕ MISSION LIETUVA: COFFEE SHOP QUEST 🧩", font=("Arial", 26, "bold"), wraplength=650, justify="center")
-start_button = tk.Button(root, text="Start Coffee Shop Game", font=("Arial", 20), command=start_game)
-
-title_label.pack(pady=30)
-start_button.pack()
-
-# Start main loop
-root.mainloop()
+    if st.button("🔁 Play Again"):
+        reset_game()
+        st.experimental_rerun()
