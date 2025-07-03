@@ -31,13 +31,8 @@ def initialize_game():
         random.shuffle(all_options)
         st.session_state.choices.append(all_options)
 
-# Initialize game if not already done
 if "step" not in st.session_state:
     initialize_game()
-
-# Flag for rerun control
-if "rerun_needed" not in st.session_state:
-    st.session_state.rerun_needed = False
 
 st.title("☕ MISSION LIETUVA: COFFEE SHOP QUEST ")
 
@@ -48,9 +43,11 @@ if not st.session_state.finished:
     st.markdown(f"### 🗨️ {phrase}")
     st.markdown(f"**{question}**")
 
-    user_choice = st.radio("Choose the correct answer:", options)
+    with st.form(key="answer_form"):
+        user_choice = st.radio("Choose the correct answer:", options)
+        submitted = st.form_submit_button("Submit")
 
-    if st.button("Submit"):
+    if submitted:
         if user_choice == correct_answer:
             st.session_state.points += 10
             st.session_state.correct_count += 1
@@ -62,8 +59,6 @@ if not st.session_state.finished:
         st.session_state.step += 1
         if st.session_state.step >= len(st.session_state.dialogue_steps):
             st.session_state.finished = True
-
-        st.session_state.rerun_needed = True
 
 else:
     st.markdown("## 🎉 Coffee Shop Mission Complete!")
@@ -80,9 +75,3 @@ else:
 
     if st.button("🔁 Play Again"):
         initialize_game()
-        st.session_state.rerun_needed = True
-
-# Trigger rerun if flagged
-if st.session_state.rerun_needed:
-    st.session_state.rerun_needed = False
-    st.experimental_rerun()
