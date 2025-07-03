@@ -92,6 +92,8 @@ if not st.session_state.finished:
                 st.error(st.session_state.feedback)
 
 else:
+    st.markdown("---")  # separator line for clarity
+
     st.markdown("## 🎉 Coffee Shop Mission Complete!")
     st.markdown(f"**✅ Correct:** {st.session_state.correct_count}")
     st.markdown(f"**❌ Incorrect:** {st.session_state.wrong_count}")
@@ -105,4 +107,7 @@ else:
         st.warning("🕵️ Keep learning! You're getting there!")
 
     if st.button("🔁 Play Again"):
+        # Clear all keys to fully reset game
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
         initialize_game()
