@@ -50,8 +50,16 @@ if not st.session_state.finished:
     phrase, question, correct_answer = st.session_state.dialogue_steps[st.session_state.step]
     options = st.session_state.choices[st.session_state.step]
 
-    st.markdown(f"### 🗨️ {phrase}")
-    st.markdown(f"**{question}**")
+    
+
+st.markdown(f"**Question {current_question} / {total_questions}**")
+
+# Lithuanian question in blue
+st.markdown(f"### 🗨️ <span style='color:blue'>{phrase}</span>", unsafe_allow_html=True)
+
+st.markdown(f"**{question}**")
+
+    
 
     if "pending_answer" not in st.session_state or st.session_state.pending_answer not in options:
         st.session_state.pending_answer = options[0]
