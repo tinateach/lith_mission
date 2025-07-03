@@ -1,8 +1,6 @@
 import streamlit as st
 import random
 
-st.set_page_config(page_title="Coffee Shop Game", layout="centered")
-
 def initialize_game():
     st.session_state.step = 0
     st.session_state.points = 0
@@ -37,6 +35,10 @@ def initialize_game():
 if "step" not in st.session_state:
     initialize_game()
 
+# Flag for rerun control
+if "rerun_needed" not in st.session_state:
+    st.session_state.rerun_needed = False
+
 st.title("☕ MISSION LIETUVA: COFFEE SHOP QUEST ")
 
 if not st.session_state.finished:
@@ -61,7 +63,7 @@ if not st.session_state.finished:
         if st.session_state.step >= len(st.session_state.dialogue_steps):
             st.session_state.finished = True
 
-        st.experimental_rerun()
+        st.session_state.rerun_needed = True
 
 else:
     st.markdown("## 🎉 Coffee Shop Mission Complete!")
@@ -78,4 +80,9 @@ else:
 
     if st.button("🔁 Play Again"):
         initialize_game()
-        st.experimental_rerun()
+        st.session_state.rerun_needed = True
+
+# Trigger rerun if flagged
+if st.session_state.rerun_needed:
+    st.session_state.rerun_needed = False
+    st.experimental_rerun()
